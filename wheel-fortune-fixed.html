@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Колесо Фортуны</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: 'Comic Sans MS', 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        
+        .dev-mode {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(255,255,255,0.95);
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 12px;
+            font-family: monospace;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            z-index: 1000;
+        }
+        
+        .dev-mode h3 {
+            margin: 0 0 10px 0;
+            color: #667eea;
+        }
+        
+        .dev-mode label {
+            display: block;
+            margin: 5px 0;
+            color: #333;
+        }
+        
+        .dev-mode input[type="number"] {
+            width: 60px;
+            margin-left: 10px;
+        }
+        
+        .dev-mode button {
+            margin-top: 10px;
+            padding: 5px 10px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-right: 5px;
+        }
+        
+        .container {
+            text-align: center;
+            background: #FFF9E6;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        
+        h1 {
+            color: #ff6b6b;
+            font-size: 28px;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .wheel-container {
+            position: relative;
+            width: 400px;
+            height: 400px;
+            margin: 0 auto 30px;
+        }
+        
+        #wheelWrapper {
+            width: 100%;
+            height: 100%;
+            transition: transform 6s cubic-bezier(0.25, 0.1, 0.25, 1);
+        }
+        
+        #wheel {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 8px solid #fff;
+            box-shadow: 0 0 20px rgba(0,0,0,0.3);
+        }
+        
+        .owl {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80px;
+            height: 80px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            z-index: 10;
+        }
+        
+        .arrow {
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 20px solid transparent;
+            border-right: 20px solid transparent;
+            border-top: 30px solid #ff6b6b;
+            z-index: 5;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+        }
+        
+        #spinBtn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 20px;
+            font-weight: bold;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: transform 0.2s;
+        }
+        
+        #spinBtn:hover {
+            transform: scale(1.05);
+        }
+        
+        #spinBtn:active {
+            transform: scale(0.95);
+        }
+        
+        #spinBtn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        #result {
+            margin-top: 20px;
+            font-size: 20px;
+            font-weight: bold;
+            color: #667eea;
+            min-height: 30px;
+        }
+    </style>
+</head>
+<body>
+    <div class="dev-mode">
+        <h3>🔧 Режим разработчика</h3>
+        <label>
+            Угол:
+            <input type="number" id="devAngle" value="0" min="0" max="360">
+        </label>
+        <label>
+            <input type="checkbox" id="devMode"> Показать номера
+        </label>
+        <button id="devSpin">Крутить до угла</button>
+        <button id="devReset">Сброс</button>
+        <div id="devInfo" style="margin-top: 10px; color: #667eea; font-weight: bold;"></div>
+    </div>
+    
+    <div class="container">
+        <h1>🎁 Получи Стартовый Подарок! 🎁</h1>
+        
+        <div class="wheel-container">
+            <div class="arrow"></div>
+            <div id="wheelWrapper">
+                <canvas id="wheel" width="400" height="400"></canvas>
+            </div>
+            <div class="owl">🦉</div>
+        </div>
+        
+        <button id="spinBtn">Крутить колесо!</button>
+        <div id="result"></div>
+    </div>
+
+    <script>
+        const segments = [
+            { text: "КАРТОЧКИ", color: "#ff6b6b" },
+            { text: "ИГРА", color: "#4ecdc4" },
+            { text: "РАСКРАСКА", color: "#ffe66d" },
+            { text: "ГАЙД ДЛЯ\nРОДИТЕЛЕЙ", color: "#95e1d3" },
+            { text: "СКИДКА 10%\nна первый урок", color: "#a29bfe" },
+            { text: "ПЕРВЫЕ\nСЛОВА", color: "#fd79a8" }
+        ];
+
+        const canvas = document.getElementById('wheel');
+        const ctx = canvas.getContext('2d');
+        const wheelWrapper = document.getElementById('wheelWrapper');
+        const spinBtn = document.getElementById('spinBtn');
+        const resultDiv = document.getElementById('result');
+        
+        // Dev mode elements
+        const devModeCheckbox = document.getElementById('devMode');
+        const devAngleInput = document.getElementById('devAngle');
+        const devSpinBtn = document.getElementById('devSpin');
+        const devResetBtn = document.getElementById('devReset');
+        const devInfo = document.getElementById('devInfo');
+        
+        let currentRotation = 0;
+        let isSpinning = false;
+        let showDevInfo = false;
+        let hasSpun = false; // Флаг для отслеживания использования
+
+        function drawWheel() {
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const radius = canvas.width / 2 - 10;
+            const segmentAngle = (2 * Math.PI) / segments.length;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            segments.forEach((segment, index) => {
+                const startAngle = index * segmentAngle - Math.PI / 2;
+                const endAngle = startAngle + segmentAngle;
+
+                // Draw segment
+                ctx.beginPath();
+                ctx.moveTo(centerX, centerY);
+                ctx.arc(centerX, centerY, radius, startAngle, endAngle);
+                ctx.closePath();
+                ctx.fillStyle = segment.color;
+                ctx.fill();
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = 3;
+                ctx.stroke();
+
+                // Draw text
+                ctx.save();
+                ctx.translate(centerX, centerY);
+                ctx.rotate(startAngle + segmentAngle / 2);
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 16px Arial';
+                ctx.shadowColor = 'rgba(0,0,0,0.5)';
+                ctx.shadowBlur = 3;
+                
+                const lines = segment.text.split('\n');
+                const lineHeight = 20;
+                const textRadius = radius * 0.65;
+                const totalHeight = (lines.length - 1) * lineHeight;
+                
+                lines.forEach((line, i) => {
+                    const yOffset = -totalHeight / 2 + i * lineHeight;
+                    ctx.fillText(line, textRadius, yOffset);
+                });
+                
+                // Dev mode: show segment numbers
+                if (showDevInfo) {
+                    ctx.fillStyle = '#000';
+                    ctx.font = 'bold 28px Arial';
+                    ctx.shadowColor = 'rgba(255,255,255,0.8)';
+                    ctx.shadowBlur = 5;
+                    ctx.fillText(index.toString(), radius * 0.3, 0);
+                }
+                
+                ctx.restore();
+            });
+        }
+
+        function spinWheel() {
+            if (isSpinning || hasSpun) return;
+            
+            isSpinning = true;
+            hasSpun = true; // Отмечаем, что колесо уже использовано
+            spinBtn.disabled = true;
+            resultDiv.textContent = '';
+            
+            // Восстанавливаем плавную анимацию для обычного вращения
+            wheelWrapper.style.transition = 'transform 6s cubic-bezier(0.25, 0.1, 0.25, 1)';
+
+            const spins = 6 + Math.random() * 4;
+            const randomDegrees = Math.random() * 360;
+            const totalRotation = spins * 360 + randomDegrees;
+            
+            currentRotation += totalRotation;
+            wheelWrapper.style.transform = `rotate(${currentRotation}deg)`;
+
+            setTimeout(() => {
+                const normalizedRotation = ((currentRotation % 360) + 360) % 360;
+                const segmentAngle = 360 / segments.length;
+                // Колесо рисуется с -90° (сегмент 0 слева), стрелка вверху
+                // Инвертируем направление: вычитаем угол поворота
+                const adjustedAngle = (360 - normalizedRotation) % 360;
+                const winningIndex = Math.floor(adjustedAngle / segmentAngle) % segments.length;
+                
+                resultDiv.textContent = `🎉 Вы выиграли: ${segments[winningIndex].text.replace('\n', ' ')}! 🎉`;
+                spinBtn.textContent = 'Использовано';
+                spinBtn.style.opacity = '0.5';
+                spinBtn.style.cursor = 'not-allowed';
+                
+                isSpinning = false;
+                updateDevInfo();
+            }, 6000);
+        }
+
+        drawWheel();
+        spinBtn.addEventListener('click', spinWheel);
+        
+        // Dev mode functionality
+        devModeCheckbox.addEventListener('change', (e) => {
+            showDevInfo = e.target.checked;
+            drawWheel();
+            updateDevInfo();
+        });
+        
+        devSpinBtn.addEventListener('click', () => {
+            if (isSpinning) return;
+            const targetAngle = parseInt(devAngleInput.value);
+            currentRotation = targetAngle;
+            wheelWrapper.style.transition = 'none';
+            wheelWrapper.style.transform = `rotate(${currentRotation}deg)`;
+            setTimeout(() => {
+                updateDevInfo();
+            }, 100);
+        });
+        
+        devResetBtn.addEventListener('click', () => {
+            currentRotation = 0;
+            hasSpun = false; // Сбрасываем флаг для тестирования
+            spinBtn.disabled = false;
+            spinBtn.textContent = 'Крутить колесо!';
+            spinBtn.style.opacity = '1';
+            spinBtn.style.cursor = 'pointer';
+            wheelWrapper.style.transition = 'none';
+            wheelWrapper.style.transform = `rotate(0deg)`;
+            resultDiv.textContent = '';
+            setTimeout(() => {
+                updateDevInfo();
+            }, 100);
+        });
+        
+        function updateDevInfo() {
+            const normalizedRotation = ((currentRotation % 360) + 360) % 360;
+            const segmentAngle = 360 / segments.length;
+            // Колесо рисуется с -90° (сегмент 0 слева), стрелка вверху
+            // Инвертируем направление: вычитаем угол поворота
+            const adjustedAngle = (360 - normalizedRotation) % 360;
+            const winningIndex = Math.floor(adjustedAngle / segmentAngle) % segments.length;
+            devInfo.innerHTML = `
+                Угол: ${normalizedRotation.toFixed(1)}°<br>
+                Сегмент: ${winningIndex}<br>
+                Приз: ${segments[winningIndex].text.replace('\n', ' ')}
+            `;
+        }
+    </script>
+</body>
+</html>
